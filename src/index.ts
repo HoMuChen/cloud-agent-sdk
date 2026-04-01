@@ -15,3 +15,6 @@ export type { ProviderFactory } from './model/registry.js'
 
 export { PromptBuilder } from './prompt/PromptBuilder.js'
 export type { PromptBuildParams } from './prompt/PromptBuilder.js'
+
+export { MemoryConversationStore } from './conversation/MemoryStore.js'
+export { getMessagesAfterCompactBoundary } from './conversation/boundary.js'
