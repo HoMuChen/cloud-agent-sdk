@@ -9,3 +9,6 @@ export type {
   ToolCallHook, ToolCallDecision,
   AgentEngineConfig,
 } from './engine/types.js'
+
+export { ModelRegistry, getDefaultRegistry } from './model/registry.js'
+export type { ProviderFactory } from './model/registry.js'
