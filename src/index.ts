@@ -12,3 +12,6 @@ export type {
 
 export { ModelRegistry, getDefaultRegistry } from './model/registry.js'
 export type { ProviderFactory } from './model/registry.js'
+
+export { PromptBuilder } from './prompt/PromptBuilder.js'
+export type { PromptBuildParams } from './prompt/PromptBuilder.js'
