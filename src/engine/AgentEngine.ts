@@ -102,7 +102,7 @@ export class AgentEngine {
     // Retry loop with ErrorHandler support (Issue C3)
     const abortSignal = options?.abortSignal ?? this.config.abortSignal
     let currentModel = model
-    let currentModelString = this.config.model
+    let currentModelString = typeof this.config.model === 'string' ? this.config.model : 'unknown'
 
     for (let attempt = 0; attempt < MAX_ERROR_ATTEMPTS; attempt++) {
       try {
