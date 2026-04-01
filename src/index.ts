@@ -28,3 +28,7 @@ export { staticProvider } from './context/providers/staticProvider.js'
 export { BudgetGuard } from './budget/BudgetGuard.js'
 export type { BudgetGuardConfig } from './budget/BudgetGuard.js'
 export { estimateTokens } from './compaction/tokenEstimator.js'
+
+export { ThresholdCompactionStrategy } from './compaction/ThresholdCompaction.js'
+export type { ThresholdCompactionConfig } from './compaction/ThresholdCompaction.js'
+export { DefaultErrorHandler } from './error/DefaultErrorHandler.js'
