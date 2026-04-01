@@ -24,3 +24,7 @@ export { AgentError, BudgetExceededError, DurationExceededError } from './engine
 
 export { ContextManager } from './context/ContextManager.js'
 export { staticProvider } from './context/providers/staticProvider.js'
+
+export { BudgetGuard } from './budget/BudgetGuard.js'
+export type { BudgetGuardConfig } from './budget/BudgetGuard.js'
+export { estimateTokens } from './compaction/tokenEstimator.js'
