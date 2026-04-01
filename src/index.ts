@@ -18,3 +18,6 @@ export type { PromptBuildParams } from './prompt/PromptBuilder.js'
 
 export { MemoryConversationStore } from './conversation/MemoryStore.js'
 export { getMessagesAfterCompactBoundary } from './conversation/boundary.js'
+
+export { AgentEngine } from './engine/AgentEngine.js'
+export { AgentError, BudgetExceededError, DurationExceededError } from './engine/errors.js'
