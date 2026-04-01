@@ -25,12 +25,35 @@ function createMockStream(
     }
   }
 
+  const encoder = new TextEncoder()
+
   return {
     fullStream: generate(),
     text: Promise.resolve(finalResult.text),
     totalUsage: Promise.resolve(finalResult.usage),
     usage: Promise.resolve(finalResult.usage),
     steps: Promise.resolve([]),
+    toUIMessageStreamResponse() {
+      // Simulate AI SDK's native UIMessageStreamResponse
+      const stream = new ReadableStream({
+        start(controller) {
+          // Emit text parts as SSE-formatted data lines
+          for (const part of parts) {
+            const data = JSON.stringify(part)
+            controller.enqueue(encoder.encode(`data: ${data}\n\n`))
+          }
+          controller.close()
+        },
+      })
+
+      return new Response(stream, {
+        headers: {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+        },
+      })
+    },
   }
 }
 
