@@ -184,6 +184,34 @@ export class AgentEngine {
     return lastResult
   }
 
+  async toUIMessageStreamResponse(
+    input: string,
+    options?: { metadata?: Record<string, unknown> },
+  ): Promise<Response> {
+    const encoder = new TextEncoder()
+    const generator = this.run(input)
+
+    const stream = new ReadableStream({
+      async pull(controller) {
+        const { value, done } = await generator.next()
+        if (done) {
+          controller.close()
+          return
+        }
+        const data = JSON.stringify(value)
+        controller.enqueue(encoder.encode(`data: ${data}\n\n`))
+      },
+    })
+
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
+    })
+  }
+
   getMessages(): readonly StoreMessage[] {
     return [...this.messages]
   }
