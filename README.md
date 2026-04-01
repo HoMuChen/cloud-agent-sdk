@@ -131,17 +131,45 @@ type AgentEvent =
   | { type: 'result'; text: string; usage: TokenUsage; durationMs: number }
 ```
 
-### Model 字串格式
+### Model 設定
 
-使用 `'provider/model-id'` 格式，SDK 內部自動解析：
+三種方式指定 model：
+
+**1. 字串格式（API key 從環境變數讀取）：**
 
 ```typescript
-'anthropic/claude-sonnet-4-6'
-'openai/gpt-4o'
-'google/gemini-2.0-flash'
+new AgentEngine({
+  model: 'anthropic/claude-sonnet-4-6',
+  ...
+})
+// 自動讀取 ANTHROPIC_API_KEY 環境變數
 ```
 
-也可以註冊自定義 provider：
+支援的格式：`'anthropic/claude-sonnet-4-6'`、`'openai/gpt-4o'`、`'google/gemini-2.0-flash'`
+
+**2. 字串格式 + 傳入 apiKey：**
+
+```typescript
+new AgentEngine({
+  model: 'anthropic/claude-sonnet-4-6',
+  apiKey: 'sk-ant-xxxxx',
+  ...
+})
+```
+
+**3. 直接傳 LanguageModel instance（完全控制）：**
+
+```typescript
+import { createAnthropic } from '@ai-sdk/anthropic'
+
+const anthropic = createAnthropic({ apiKey: 'sk-ant-xxxxx', baseURL: '...' })
+new AgentEngine({
+  model: anthropic('claude-sonnet-4-6'),
+  ...
+})
+```
+
+**註冊自定義 provider：**
 
 ```typescript
 import { getDefaultRegistry } from 'cloud-agent-sdk'
@@ -516,10 +544,11 @@ const engine = new AgentEngine({
 
 | 欄位 | 型別 | 必要 | 說明 |
 |------|------|------|------|
-| `model` | `string` | Yes | `'provider/model-id'` 格式 |
+| `model` | `string \| LanguageModel` | Yes | 字串格式 `'provider/model-id'` 或 AI SDK LanguageModel instance |
 | `tools` | `Record<string, Tool>` | Yes | AI SDK tool 定義 |
 | `conversationStore` | `ConversationStore` | Yes | 對話持久化 |
 | `conversationId` | `string` | Yes | 對話 ID |
+| `apiKey` | `string` | No | LLM provider 的 API key（字串 model 時使用，不設則讀環境變數）|
 | `systemPrompt` | `string` | No | 角色定義 |
 | `contextProviders` | `ContextProvider[]` | No | 動態 context 注入 |
 | `instructions` | `string[]` | No | 額外指令 |
