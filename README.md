@@ -28,7 +28,7 @@ import { z } from 'zod'
 const store = new MemoryConversationStore()
 
 const engine = new AgentEngine({
-  model: 'anthropic/claude-sonnet-4.5',
+  model: 'anthropic/claude-sonnet-4-6',
   tools: {
     get_weather: tool({
       description: '查詢天氣',
@@ -58,7 +58,7 @@ import { AgentEngine } from 'cloud-agent-sdk'
 async function createEngine(conversationId: string, opts?: { abortSignal?: AbortSignal }) {
   const store = new PostgresConversationStore(db) // 你自己實作的 store
   return new AgentEngine({
-    model: 'anthropic/claude-sonnet-4.5',
+    model: 'anthropic/claude-sonnet-4-6',
     tools: createBusinessTools(apiClient),
     conversationStore: store,
     conversationId,
@@ -136,7 +136,7 @@ type AgentEvent =
 使用 `'provider/model-id'` 格式，SDK 內部自動解析：
 
 ```typescript
-'anthropic/claude-sonnet-4.5'
+'anthropic/claude-sonnet-4-6'
 'openai/gpt-4o'
 'google/gemini-2.0-flash'
 ```
@@ -239,7 +239,7 @@ key 就是 tool 名稱（LLM 用來呼叫），建議用 `snake_case`：
 
 ```typescript
 const engine = new AgentEngine({
-  model: 'anthropic/claude-sonnet-4.5',
+  model: 'anthropic/claude-sonnet-4-6',
   tools: createBusinessTools(apiClient),
   // ...
 })
@@ -458,7 +458,7 @@ const engine = new AgentEngine({
 ```typescript
 const engine = new AgentEngine({
   // LLM
-  model: 'anthropic/claude-sonnet-4.5',
+  model: 'anthropic/claude-sonnet-4-6',
 
   // System prompt
   systemPrompt: `你是 Acme Corp 的 AI 助手，幫助員工分析業務數據。`,

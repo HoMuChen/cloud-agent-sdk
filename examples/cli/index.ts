@@ -78,7 +78,7 @@ async function main() {
     process.stdout.write('AI  > ')
 
     const engine = new AgentEngine({
-      model: 'anthropic/claude-sonnet-4.5',
+      model: 'anthropic/claude-sonnet-4-6',
       systemPrompt: '你是一個友善的 AI 助手，使用繁體中文回覆。',
       tools,
       conversationStore: store,
