@@ -30,10 +30,16 @@ export class AgentEngine {
   ): AsyncGenerator<AgentEvent> {
     const startTime = Date.now()
 
-    // Resolve model (async)
+    // Resolve model (async) — accepts string or LanguageModel instance
     let model: LanguageModel
     try {
-      model = await getDefaultRegistry().resolve(this.config.model)
+      if (typeof this.config.model === 'string') {
+        model = await getDefaultRegistry().resolve(this.config.model, {
+          apiKey: this.config.apiKey,
+        })
+      } else {
+        model = this.config.model
+      }
     } catch (error) {
       yield {
         type: 'error',
@@ -292,8 +298,10 @@ export class AgentEngine {
     input: string,
     _options?: { metadata?: Record<string, unknown> },
   ): Promise<Response> {
-    // Resolve model
-    const model: LanguageModel = await getDefaultRegistry().resolve(this.config.model)
+    // Resolve model — accepts string or LanguageModel instance
+    const model: LanguageModel = typeof this.config.model === 'string'
+      ? await getDefaultRegistry().resolve(this.config.model, { apiKey: this.config.apiKey })
+      : this.config.model
 
     // Resolve context providers
     const resolvedContexts: ContextBlock[] = []

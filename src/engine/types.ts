@@ -156,7 +156,7 @@ export type ToolCallDecision =
 
 // === Agent Engine Config ===
 export interface AgentEngineConfig {
-  model: string
+  model: string | LanguageModel
   tools: Record<string, any>
   conversationStore: ConversationStore
   conversationId: string
@@ -166,6 +166,8 @@ export interface AgentEngineConfig {
   instructions?: string[]
 
   initialMessages?: StoreMessage[]
+
+  apiKey?: string
 
   maxSteps?: number
   maxBudgetUsd?: number

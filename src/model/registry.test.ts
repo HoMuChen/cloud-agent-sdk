@@ -29,7 +29,7 @@ describe('ModelRegistry', () => {
     registry.registerProvider('test', factory)
     const result = await registry.resolve('test/my-model')
 
-    expect(factory).toHaveBeenCalledWith('my-model')
+    expect(factory).toHaveBeenCalledWith('my-model', undefined)
     expect(result).toBe(mockModel)
   })
 
@@ -51,7 +51,7 @@ describe('ModelRegistry', () => {
     registry.registerProvider('custom', secondFactory)
 
     const result = await registry.resolve('custom/some-model')
-    expect(secondFactory).toHaveBeenCalledWith('some-model')
+    expect(secondFactory).toHaveBeenCalledWith('some-model', undefined)
     expect(result).toBe(secondModel)
     expect(firstFactory).not.toHaveBeenCalled()
   })

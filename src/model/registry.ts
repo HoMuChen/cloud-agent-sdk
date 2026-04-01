@@ -1,6 +1,6 @@
 import type { LanguageModel } from 'ai'
 
-export type ProviderFactory = (modelId: string) => LanguageModel
+export type ProviderFactory = (modelId: string, options?: { apiKey?: string }) => LanguageModel
 
 const BUILTIN_PROVIDERS = ['anthropic', 'openai', 'google'] as const
 const BUILTIN_PACKAGE_MAP: Record<string, string> = {
@@ -29,7 +29,7 @@ export class ModelRegistry {
     this.providers.set(name, factory)
   }
 
-  async resolve(model: string): Promise<LanguageModel> {
+  async resolve(model: string, options?: { apiKey?: string }): Promise<LanguageModel> {
     const { provider, modelId } = this.parseModelString(model)
 
     let factory: ProviderFactory | undefined = this.providers.get(provider)
@@ -40,7 +40,7 @@ export class ModelRegistry {
       throw new Error(`Provider "${provider}" is not registered and could not be loaded`)
     }
 
-    return factory(modelId)
+    return factory(modelId, options)
   }
 
   async tryLoadBuiltinProvider(name: string): Promise<ProviderFactory | null> {
@@ -53,7 +53,15 @@ export class ModelRegistry {
       const mod = await import(packageName)
       const providerFn = mod[name]
       if (typeof providerFn === 'function') {
-        const factory: ProviderFactory = (modelId: string) => providerFn(modelId)
+        const createProviderFn = mod[`create${name.charAt(0).toUpperCase()}${name.slice(1)}`]
+        const factory: ProviderFactory = (modelId: string, options?: { apiKey?: string }) => {
+          if (options?.apiKey && typeof createProviderFn === 'function') {
+            // Use createAnthropic/createOpenAI/createGoogle with apiKey
+            const provider = createProviderFn({ apiKey: options.apiKey })
+            return provider(modelId)
+          }
+          return providerFn(modelId)
+        }
         this.providers.set(name, factory)
         return factory
       }
