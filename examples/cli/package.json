@@ -7,7 +7,7 @@
     "start": "tsx index.ts"
   },
   "dependencies": {
-    "cloud-agent-sdk": "^0.1.0",
+    "cloud-agent-sdk": "^0.1.2",
     "@ai-sdk/anthropic": "^2.0.71",
     "ai": "^5.0.0",
     "zod": "^3.23.0"
