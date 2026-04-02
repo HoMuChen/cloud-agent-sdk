@@ -285,31 +285,102 @@ export class AgentEngine {
 
   async toUIMessageStreamResponse(
     input: string,
-    options?: { abortSignal?: AbortSignal },
+    _options?: { abortSignal?: AbortSignal },
   ): Promise<Response> {
-    // Driven by run() — all features (stopAfterTools, onToolCall, onError, etc.) work automatically
-    const encoder = new TextEncoder()
-    const generator = this.run(input, options)
+    // Uses streamText().toUIMessageStreamResponse() for native useChat compatibility.
+    // stopAfterTools is handled via custom stopWhen condition at the AI SDK level.
 
-    const stream = new ReadableStream({
-      async pull(controller) {
-        const { value, done } = await generator.next()
-        if (done) {
-          controller.close()
-          return
+    // Resolve model
+    const model: LanguageModel = typeof this.config.model === 'string'
+      ? await getDefaultRegistry().resolve(this.config.model, { apiKey: this.config.apiKey })
+      : this.config.model
+
+    // Resolve context providers
+    const resolvedContexts: ContextBlock[] = []
+    if (this.config.contextProviders && this.config.contextProviders.length > 0) {
+      const results = await Promise.allSettled(
+        this.config.contextProviders.map((p) =>
+          p.resolve({
+            conversationId: this.config.conversationId,
+            turnIndex: this.messages.length,
+          }),
+        ),
+      )
+      for (const result of results) {
+        if (result.status === 'fulfilled' && result.value) {
+          resolvedContexts.push(result.value)
         }
-        const data = JSON.stringify(value)
-        controller.enqueue(encoder.encode(`data: ${data}\n\n`))
-      },
+      }
+    }
+
+    // Append user message and persist immediately
+    const userMessage: StoreMessage = { role: 'user', content: input }
+    this.messages.push(userMessage)
+    await this.config.conversationStore.append(this.config.conversationId, [userMessage])
+
+    // Build system prompt
+    const system = this.promptBuilder.build({
+      systemPrompt: this.config.systemPrompt,
+      tools: this.config.tools,
+      resolvedContexts,
+      instructions: this.config.instructions,
+      maxSteps: this.config.maxSteps,
     })
 
-    return new Response(stream, {
-      headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-      },
+    // Prepend user-prefix contexts to last user message content
+    const userPrefixContexts = resolvedContexts.filter((c) => c.placement === 'user-prefix')
+    let messages = this.messages.map((m) => ({ role: m.role as 'user' | 'assistant' | 'system', content: m.content }))
+    if (userPrefixContexts.length > 0 && messages.length > 0) {
+      const lastIdx = messages.length - 1
+      const prefixContent = userPrefixContexts.map((c) => c.content).join('\n\n')
+      messages = [
+        ...messages.slice(0, lastIdx),
+        { ...messages[lastIdx], content: `${prefixContent}\n\n${messages[lastIdx].content}` },
+      ]
+    }
+
+    // Build stopWhen condition — combines maxSteps + stopAfterTools
+    const maxSteps = this.config.maxSteps ?? 25
+    const stopAfterToolNames = this.config.stopAfterTools
+    const stopCondition = stopAfterToolNames
+      ? (event: { steps: Array<{ toolResults?: Array<{ toolName: string }> }> }) => {
+          if (event.steps.length >= maxSteps) return true
+          const lastStep = event.steps[event.steps.length - 1]
+          if (lastStep?.toolResults) {
+            return lastStep.toolResults.some((r: { toolName: string }) => stopAfterToolNames.includes(r.toolName))
+          }
+          return false
+        }
+      : stepCountIs(maxSteps)
+
+    // Call streamText with native AI SDK streaming
+    const result = streamText({
+      model,
+      system,
+      messages,
+      tools: this.config.tools,
+      stopWhen: stopCondition as any,
+      ...(this.config.abortSignal ? { abortSignal: this.config.abortSignal } : {}),
     })
+
+    // Persist assistant message after streaming completes (fire and forget)
+    void Promise.all([result.text, result.totalUsage]).then(async ([finalText, finalTotalUsage]) => {
+      const usage: TokenUsage = {
+        inputTokens: finalTotalUsage?.inputTokens ?? 0,
+        outputTokens: finalTotalUsage?.outputTokens ?? 0,
+      }
+      this.totalUsage.inputTokens += usage.inputTokens
+      this.totalUsage.outputTokens += usage.outputTokens
+
+      if (finalText) {
+        const assistantMessage: StoreMessage = { role: 'assistant', content: finalText }
+        this.messages.push(assistantMessage)
+        await this.config.conversationStore.append(this.config.conversationId, [assistantMessage])
+      }
+    })
+
+    // Return AI SDK's native toUIMessageStreamResponse for useChat compatibility
+    return result.toUIMessageStreamResponse()
   }
 
   getMessages(): readonly StoreMessage[] {
