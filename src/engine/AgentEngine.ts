@@ -285,84 +285,31 @@ export class AgentEngine {
 
   async toUIMessageStreamResponse(
     input: string,
-    _options?: { metadata?: Record<string, unknown> },
+    options?: { metadata?: Record<string, unknown> },
   ): Promise<Response> {
-    // Resolve model — accepts string or LanguageModel instance
-    const model: LanguageModel = typeof this.config.model === 'string'
-      ? await getDefaultRegistry().resolve(this.config.model, { apiKey: this.config.apiKey })
-      : this.config.model
+    // Driven by run() — all features (stopAfterTools, onToolCall, onError, etc.) work automatically
+    const encoder = new TextEncoder()
+    const generator = this.run(input, options)
 
-    // Resolve context providers
-    const resolvedContexts: ContextBlock[] = []
-    if (this.config.contextProviders && this.config.contextProviders.length > 0) {
-      const results = await Promise.allSettled(
-        this.config.contextProviders.map((p) =>
-          p.resolve({
-            conversationId: this.config.conversationId,
-            turnIndex: this.messages.length,
-          }),
-        ),
-      )
-      for (const result of results) {
-        if (result.status === 'fulfilled' && result.value) {
-          resolvedContexts.push(result.value)
+    const stream = new ReadableStream({
+      async pull(controller) {
+        const { value, done } = await generator.next()
+        if (done) {
+          controller.close()
+          return
         }
-      }
-    }
-
-    // Append user message and persist immediately
-    const userMessage: StoreMessage = { role: 'user', content: input }
-    this.messages.push(userMessage)
-    await this.config.conversationStore.append(this.config.conversationId, [userMessage])
-
-    // Build system prompt
-    const system = this.promptBuilder.build({
-      systemPrompt: this.config.systemPrompt,
-      tools: this.config.tools,
-      resolvedContexts,
-      instructions: this.config.instructions,
-      maxSteps: this.config.maxSteps,
+        const data = JSON.stringify(value)
+        controller.enqueue(encoder.encode(`data: ${data}\n\n`))
+      },
     })
 
-    // Prepend user-prefix contexts to last user message content
-    const userPrefixContexts = resolvedContexts.filter((c) => c.placement === 'user-prefix')
-    let messages = this.messages.map((m) => ({ role: m.role as 'user' | 'assistant' | 'system', content: m.content }))
-    if (userPrefixContexts.length > 0 && messages.length > 0) {
-      const lastIdx = messages.length - 1
-      const prefixContent = userPrefixContexts.map((c) => c.content).join('\n\n')
-      messages = [
-        ...messages.slice(0, lastIdx),
-        { ...messages[lastIdx], content: `${prefixContent}\n\n${messages[lastIdx].content}` },
-      ]
-    }
-
-    // Call streamText and return AI SDK's native UIMessageStreamResponse (Issue I3)
-    const result = streamText({
-      model,
-      system,
-      messages,
-      tools: this.config.tools,
-      stopWhen: stepCountIs(this.config.maxSteps ?? 25),
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
     })
-
-    // Persist assistant message after streaming completes (fire and forget)
-    void Promise.all([result.text, result.totalUsage]).then(async ([finalText, finalTotalUsage]) => {
-      const usage: TokenUsage = {
-        inputTokens: finalTotalUsage?.inputTokens ?? 0,
-        outputTokens: finalTotalUsage?.outputTokens ?? 0,
-      }
-      this.totalUsage.inputTokens += usage.inputTokens
-      this.totalUsage.outputTokens += usage.outputTokens
-
-      if (finalText) {
-        const assistantMessage: StoreMessage = { role: 'assistant', content: finalText }
-        this.messages.push(assistantMessage)
-        await this.config.conversationStore.append(this.config.conversationId, [assistantMessage])
-      }
-    })
-
-    // Return AI SDK's native toUIMessageStreamResponse for useChat compatibility
-    return result.toUIMessageStreamResponse()
   }
 
   getMessages(): readonly StoreMessage[] {
