@@ -139,7 +139,45 @@ new AgentEngine({
 // 自動讀取 ANTHROPIC_API_KEY 環境變數
 ```
 
-支援的格式：`'anthropic/claude-sonnet-4-6'`、`'openai/gpt-4o'`、`'google/gemini-2.0-flash'`
+內建支援三家 provider，格式為 `'provider/model-id'`：
+
+**Anthropic**（環境變數：`ANTHROPIC_API_KEY`）
+
+| Model ID | 名稱 |
+|----------|------|
+| `anthropic/claude-sonnet-4-6` | Claude Sonnet 4.6 |
+| `anthropic/claude-opus-4-6` | Claude Opus 4.6 |
+| `anthropic/claude-sonnet-4-5-20250929` | Claude Sonnet 4.5 |
+| `anthropic/claude-opus-4-5-20251101` | Claude Opus 4.5 |
+| `anthropic/claude-haiku-4-5-20251001` | Claude Haiku 4.5 |
+| `anthropic/claude-sonnet-4-20250514` | Claude Sonnet 4 |
+| `anthropic/claude-opus-4-20250514` | Claude Opus 4 |
+
+**OpenAI**（環境變數：`OPENAI_API_KEY`）
+
+| Model ID | 名稱 |
+|----------|------|
+| `openai/gpt-5.4` | GPT-5.4 |
+| `openai/gpt-4.1` | GPT-4.1 |
+| `openai/gpt-4.1-mini` | GPT-4.1 Mini |
+| `openai/gpt-4.1-nano` | GPT-4.1 Nano |
+| `openai/gpt-4o` | GPT-4o |
+| `openai/gpt-4o-mini` | GPT-4o Mini |
+| `openai/o4-mini` | O4 Mini |
+| `openai/o3` | O3 |
+| `openai/o3-mini` | O3 Mini |
+
+**Google**（環境變數：`GOOGLE_GENERATIVE_AI_API_KEY`）
+
+| Model ID | 名稱 |
+|----------|------|
+| `google/gemini-3.1-pro` | Gemini 3.1 Pro |
+| `google/gemini-3.0-flash` | Gemini 3 Flash |
+| `google/gemini-3.1-flash-lite` | Gemini 3.1 Flash Lite |
+| `google/gemini-2.5-pro` | Gemini 2.5 Pro |
+| `google/gemini-2.5-flash` | Gemini 2.5 Flash |
+
+> 以上為常見 model，各家完整列表請參考官方文件。SDK 會將 model ID 原封不動傳給 provider API，因此新 model 上線時不需要更新 SDK。
 
 **2. 字串格式 + 傳入 apiKey：**
 
