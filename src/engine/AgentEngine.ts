@@ -285,7 +285,7 @@ export class AgentEngine {
 
   async toUIMessageStreamResponse(
     input: string,
-    options?: { metadata?: Record<string, unknown> },
+    options?: { abortSignal?: AbortSignal },
   ): Promise<Response> {
     // Driven by run() — all features (stopAfterTools, onToolCall, onError, etc.) work automatically
     const encoder = new TextEncoder()
