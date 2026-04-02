@@ -171,11 +171,14 @@ new AgentEngine({
 
 | Model ID | 名稱 |
 |----------|------|
-| `google/gemini-3.1-pro` | Gemini 3.1 Pro |
-| `google/gemini-3.0-flash` | Gemini 3 Flash |
-| `google/gemini-3.1-flash-lite` | Gemini 3.1 Flash Lite |
+| `google/gemini-3.1-pro-preview` | Gemini 3.1 Pro（preview）|
+| `google/gemini-3-flash-preview` | Gemini 3 Flash（preview）|
+| `google/gemini-3-pro-preview` | Gemini 3 Pro（preview）|
+| `google/gemini-3.1-flash-lite-preview` | Gemini 3.1 Flash Lite（preview）|
 | `google/gemini-2.5-pro` | Gemini 2.5 Pro |
 | `google/gemini-2.5-flash` | Gemini 2.5 Flash |
+| `google/gemini-2.5-flash-lite` | Gemini 2.5 Flash Lite |
+| `google/gemini-2.0-flash` | Gemini 2.0 Flash |
 
 > 以上為常見 model，各家完整列表請參考官方文件。SDK 會將 model ID 原封不動傳給 provider API，因此新 model 上線時不需要更新 SDK。
 
