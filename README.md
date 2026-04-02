@@ -1,6 +1,6 @@
 # cloud-agent-sdk
 
-為既有 API 加上 AI 對話能力的 TypeScript SDK。基於 [Vercel AI SDK](https://sdk.vercel.ai)，提供 agentic loop、對話持久化、context 注入、自動壓縮、預算控制。
+為既有 API 加上 AI 對話能力的 TypeScript SDK。基於 [Vercel AI SDK](https://sdk.vercel.ai)，提供 agentic loop、對話持久化、context 注入、自動壓縮。
 
 ## 安裝
 
@@ -8,13 +8,7 @@
 npm install cloud-agent-sdk
 ```
 
-安裝你需要的 LLM provider（至少一個）：
-
-```bash
-npm install @ai-sdk/anthropic   # Anthropic (Claude)
-npm install @ai-sdk/openai      # OpenAI
-npm install @ai-sdk/google       # Google (Gemini)
-```
+已內含 Anthropic、OpenAI、Google 三家 LLM provider，不需要額外安裝。
 
 ## 快速開始
 
