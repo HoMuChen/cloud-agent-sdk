@@ -56,15 +56,13 @@ describe('PromptBuilder', () => {
     expect(result).toContain('Be concise.')
   })
 
-  it('includes guardrails when budget/steps set', () => {
+  it('includes guardrails when steps set', () => {
     const result = builder.build({
       tools: {},
       resolvedContexts: [],
       maxSteps: 10,
-      maxBudgetUsd: 0.5,
     })
     expect(result).toContain('10')
-    expect(result).toContain('budget')
   })
 
   it('assembles all layers in order', () => {

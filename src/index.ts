@@ -20,13 +20,11 @@ export { MemoryConversationStore } from './conversation/MemoryStore.js'
 export { getMessagesAfterCompactBoundary } from './conversation/boundary.js'
 
 export { AgentEngine } from './engine/AgentEngine.js'
-export { AgentError, BudgetExceededError, DurationExceededError } from './engine/errors.js'
+export { AgentError, DurationExceededError } from './engine/errors.js'
 
 export { ContextManager } from './context/ContextManager.js'
 export { staticProvider } from './context/providers/staticProvider.js'
 
-export { BudgetGuard } from './budget/BudgetGuard.js'
-export type { BudgetGuardConfig } from './budget/BudgetGuard.js'
 export { estimateTokens } from './compaction/tokenEstimator.js'
 
 export { ThresholdCompactionStrategy } from './compaction/ThresholdCompaction.js'

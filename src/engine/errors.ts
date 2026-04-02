@@ -5,13 +5,6 @@ export class AgentError extends Error {
   }
 }
 
-export class BudgetExceededError extends AgentError {
-  constructor(message = 'Budget exceeded') {
-    super(message, 'BUDGET_EXCEEDED')
-    this.name = 'BudgetExceededError'
-  }
-}
-
 export class DurationExceededError extends AgentError {
   constructor(message = 'Duration exceeded') {
     super(message, 'DURATION_EXCEEDED')

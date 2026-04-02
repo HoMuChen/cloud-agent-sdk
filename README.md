@@ -402,7 +402,6 @@ const rules = staticProvider('rules', '退款上限 30 天', 'system')
 const engine = new AgentEngine({
   ...,
   maxSteps: 30,           // 最多 30 步 tool call
-  maxBudgetUsd: 0.50,     // 花費上限 $0.50
   maxDurationMs: 120_000, // 時間上限 2 分鐘
 })
 ```
@@ -518,7 +517,6 @@ const engine = new AgentEngine({
 
   // 護欄
   maxSteps: 30,
-  maxBudgetUsd: 0.50,
   maxDurationMs: 120_000,
   abortSignal: req.signal,
 
@@ -554,7 +552,6 @@ const engine = new AgentEngine({
 | `instructions` | `string[]` | No | 額外指令 |
 | `initialMessages` | `StoreMessage[]` | No | 從 store 載入的訊息 |
 | `maxSteps` | `number` | No | Tool call 步數上限（預設 25）|
-| `maxBudgetUsd` | `number` | No | 花費上限（USD）|
 | `maxDurationMs` | `number` | No | 時間上限（毫秒）|
 | `abortSignal` | `AbortSignal` | No | 外部取消信號 |
 | `onToolCall` | `ToolCallHook` | No | Tool 呼叫攔截器 |

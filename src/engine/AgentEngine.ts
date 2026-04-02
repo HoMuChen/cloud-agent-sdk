@@ -2,7 +2,6 @@ import { streamText, stepCountIs } from 'ai'
 import type { LanguageModel } from 'ai'
 import { getDefaultRegistry } from '../model/registry.js'
 import { PromptBuilder } from '../prompt/PromptBuilder.js'
-import { BudgetGuard } from '../budget/BudgetGuard.js'
 import type {
   AgentEngineConfig,
   AgentEvent,
@@ -11,7 +10,7 @@ import type {
   StoreMessage,
   TokenUsage,
 } from './types.js'
-import { BudgetExceededError, DurationExceededError } from './errors.js'
+import { DurationExceededError } from './errors.js'
 
 const MAX_ERROR_ATTEMPTS = 3
 
@@ -79,7 +78,6 @@ export class AgentEngine {
       resolvedContexts,
       instructions: this.config.instructions,
       maxSteps: this.config.maxSteps,
-      maxBudgetUsd: this.config.maxBudgetUsd,
     })
 
     // Prepend user-prefix contexts to last user message content
@@ -94,12 +92,7 @@ export class AgentEngine {
       ]
     }
 
-    // Build budget guard
-    const budgetGuard = this.config.maxBudgetUsd != null
-      ? new BudgetGuard({ maxBudgetUsd: this.config.maxBudgetUsd })
-      : null
-
-    // Retry loop with ErrorHandler support (Issue C3)
+    // Retry loop with ErrorHandler support
     const abortSignal = options?.abortSignal ?? this.config.abortSignal
     let currentModel = model
     let currentModelString = typeof this.config.model === 'string' ? this.config.model : 'unknown'
@@ -115,9 +108,6 @@ export class AgentEngine {
           stopWhen: stepCountIs(this.config.maxSteps ?? 25),
           ...(abortSignal ? { abortSignal } : {}),
         })
-
-        // Per-step usage accumulator for budget checking (Issue C2)
-        const stepUsage: TokenUsage = { inputTokens: 0, outputTokens: 0 }
 
         // Iterate fullStream parts and map to AgentEvents
         for await (const part of result.fullStream) {
@@ -163,18 +153,6 @@ export class AgentEngine {
               input: part.input,
               output: part.output,
             } satisfies AgentEvent
-          } else if (part.type === 'finish-step') {
-            // Track per-step usage for budget checking (Issue C2)
-            const usage = (part as any).usage
-            if (usage) {
-              stepUsage.inputTokens += usage.inputTokens ?? 0
-              stepUsage.outputTokens += usage.outputTokens ?? 0
-
-              // Check budget guard after each step
-              if (budgetGuard && budgetGuard.isExceeded(stepUsage, currentModelString)) {
-                throw new BudgetExceededError()
-              }
-            }
           }
           // All other part types: skip
         }
@@ -333,7 +311,6 @@ export class AgentEngine {
       resolvedContexts,
       instructions: this.config.instructions,
       maxSteps: this.config.maxSteps,
-      maxBudgetUsd: this.config.maxBudgetUsd,
     })
 
     // Prepend user-prefix contexts to last user message content

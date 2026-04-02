@@ -170,7 +170,6 @@ export interface AgentEngineConfig {
   apiKey?: string
 
   maxSteps?: number
-  maxBudgetUsd?: number
   maxDurationMs?: number
   abortSignal?: AbortSignal
 

@@ -6,7 +6,6 @@ export interface PromptBuildParams {
   resolvedContexts: ContextBlock[]
   instructions?: string[]
   maxSteps?: number
-  maxBudgetUsd?: number
 }
 
 const DEFAULT_ROLE_PROMPT =
@@ -49,9 +48,6 @@ export class PromptBuilder {
     const guardrailLines: string[] = []
     if (params.maxSteps != null) {
       guardrailLines.push(`- Maximum steps: ${params.maxSteps}`)
-    }
-    if (params.maxBudgetUsd != null) {
-      guardrailLines.push(`- Maximum budget: $${params.maxBudgetUsd}`)
     }
     if (guardrailLines.length > 0) {
       layers.push(['# Guardrails', ...guardrailLines].join('\n'))

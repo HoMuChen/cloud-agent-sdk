@@ -16,13 +16,6 @@ vi.mock('../model/registry.js', () => ({
   }),
 }))
 
-vi.mock('../budget/pricing.js', () => ({
-  getModelPricing: vi.fn().mockReturnValue({
-    inputPerToken: 0.000003,
-    outputPerToken: 0.000015,
-  }),
-}))
-
 function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
@@ -178,51 +171,7 @@ describe('AgentEngine safety features', () => {
     expect(toolStart).toBeUndefined()
   })
 
-  // === Issue C2: BudgetGuard tests ===
-
-  it('stops when BudgetGuard detects budget exceeded via finish-step usage', async () => {
-    // With default pricing: inputPerToken=0.000003, outputPerToken=0.000015
-    // 1,000,000 input tokens * 0.000003 = $3.00, which exceeds $0.01 budget
-    mockStreamText.mockReturnValue(
-      createMockStream(
-        [
-          { type: 'text-delta', text: 'Hello' },
-          { type: 'finish-step', usage: { inputTokens: 1000000, outputTokens: 0 } },
-        ],
-        { text: 'Hello', usage: { inputTokens: 1000000, outputTokens: 0 } },
-      ),
-    )
-
-    const engine = new AgentEngine(makeConfig({ maxBudgetUsd: 0.01 }))
-    const events = await collectEvents(engine, 'Hi')
-
-    const errorEvent = events.find((e) => e.type === 'error')
-    expect(errorEvent).toBeDefined()
-    expect((errorEvent as any).error.message).toContain('Budget exceeded')
-  })
-
-  it('does not stop when usage is within budget', async () => {
-    mockStreamText.mockReturnValue(
-      createMockStream(
-        [
-          { type: 'text-delta', text: 'Hello' },
-          { type: 'finish-step', usage: { inputTokens: 10, outputTokens: 5 } },
-        ],
-        { text: 'Hello', usage: { inputTokens: 10, outputTokens: 5 } },
-      ),
-    )
-
-    const engine = new AgentEngine(makeConfig({ maxBudgetUsd: 10.0 }))
-    const events = await collectEvents(engine, 'Hi')
-
-    const errorEvent = events.find((e) => e.type === 'error')
-    expect(errorEvent).toBeUndefined()
-
-    const resultEvent = events.find((e) => e.type === 'result')
-    expect(resultEvent).toBeDefined()
-  })
-
-  // === Issue C3: ErrorHandler tests ===
+  // === ErrorHandler tests ===
 
   it('retries on error when ErrorHandler returns retry', async () => {
     let callCount = 0
