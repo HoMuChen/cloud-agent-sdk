@@ -1,6 +1,6 @@
 {
   "name": "cloud-agent-sdk",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Cloud Agent SDK — agentic loop powered by Vercel AI SDK",
   "repository": {
     "type": "git",
