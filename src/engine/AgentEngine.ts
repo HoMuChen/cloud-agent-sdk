@@ -109,6 +109,10 @@ export class AgentEngine {
           ...(abortSignal ? { abortSignal } : {}),
         })
 
+        // stopAfterTools support
+        const stopAfterTools = this.config.stopAfterTools
+        let stoppedByTool: string | null = null
+
         // Iterate fullStream parts and map to AgentEvents
         for await (const part of result.fullStream) {
           // Check duration on each part
@@ -153,6 +157,12 @@ export class AgentEngine {
               input: part.input,
               output: part.output,
             } satisfies AgentEvent
+
+            // Check stopAfterTools — break the loop after this tool completes
+            if (stopAfterTools?.includes(part.toolName)) {
+              stoppedByTool = part.toolName
+              break
+            }
           }
           // All other part types: skip
         }
@@ -206,6 +216,7 @@ export class AgentEngine {
           text: finalText,
           usage,
           durationMs,
+          ...(stoppedByTool ? { stoppedByTool } : {}),
         } satisfies ResultEvent
 
         // Success - break out of retry loop

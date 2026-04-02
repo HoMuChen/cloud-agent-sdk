@@ -58,6 +58,7 @@ export interface ResultEvent {
   text: string
   usage: TokenUsage
   durationMs: number
+  stoppedByTool?: string
 }
 
 // === Context Provider ===
@@ -172,6 +173,7 @@ export interface AgentEngineConfig {
   maxSteps?: number
   maxDurationMs?: number
   abortSignal?: AbortSignal
+  stopAfterTools?: string[]
 
   onToolCall?: ToolCallHook
   onError?: ErrorHandler

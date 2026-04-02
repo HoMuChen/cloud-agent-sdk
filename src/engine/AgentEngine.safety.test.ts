@@ -335,4 +335,78 @@ describe('AgentEngine safety features', () => {
     expect(compactEvent).toBeUndefined()
     expect(compactionStrategy.compact).not.toHaveBeenCalled()
   })
+
+  // === stopAfterTools tests ===
+
+  it('stops the loop after a tool in stopAfterTools completes', async () => {
+    mockStreamText.mockReturnValue(
+      createMockStream(
+        [
+          { type: 'text-delta', text: 'Let me ask' },
+          { type: 'tool-call', toolCallId: 'tc-1', toolName: 'ask_user_question', input: { question: 'Which one?' } },
+          { type: 'tool-result', toolCallId: 'tc-1', toolName: 'ask_user_question', input: { question: 'Which one?' }, output: { asked: true } },
+          // These should NOT be yielded:
+          { type: 'text-delta', text: 'After the stop - should not appear' },
+          { type: 'tool-call', toolCallId: 'tc-2', toolName: 'do_something', input: {} },
+          { type: 'tool-result', toolCallId: 'tc-2', toolName: 'do_something', input: {}, output: {} },
+        ],
+        { text: 'Let me ask', usage: { inputTokens: 20, outputTokens: 10 } },
+      ),
+    )
+
+    const engine = new AgentEngine(makeConfig({
+      stopAfterTools: ['ask_user_question', 'suggest_next_questions'],
+    }))
+    const events = await collectEvents(engine, 'Hello')
+
+    // Should have tool-call-start and tool-call-complete for ask_user_question
+    const toolStart = events.find((e) => e.type === 'tool-call-start')
+    expect(toolStart).toBeDefined()
+    expect((toolStart as any).toolName).toBe('ask_user_question')
+
+    const toolComplete = events.find((e) => e.type === 'tool-call-complete')
+    expect(toolComplete).toBeDefined()
+    expect((toolComplete as any).toolName).toBe('ask_user_question')
+
+    // Should NOT have events after the stop
+    const allToolNames = events
+      .filter((e) => e.type === 'tool-call-start' || e.type === 'tool-call-complete')
+      .map((e) => (e as any).toolName)
+    expect(allToolNames).not.toContain('do_something')
+
+    // Should NOT have the text after the stop
+    const allText = events.filter((e) => e.type === 'text-delta').map((e) => (e as any).text)
+    expect(allText.join('')).not.toContain('should not appear')
+
+    // Result should have stoppedByTool
+    const result = events.find((e) => e.type === 'result')
+    expect(result).toBeDefined()
+    expect((result as any).stoppedByTool).toBe('ask_user_question')
+  })
+
+  it('does not stop for tools not in stopAfterTools', async () => {
+    mockStreamText.mockReturnValue(
+      createMockStream(
+        [
+          { type: 'tool-call', toolCallId: 'tc-1', toolName: 'get_weather', input: { city: 'Tokyo' } },
+          { type: 'tool-result', toolCallId: 'tc-1', toolName: 'get_weather', input: { city: 'Tokyo' }, output: { temp: 20 } },
+          { type: 'text-delta', text: 'The weather is nice' },
+        ],
+        { text: 'The weather is nice', usage: { inputTokens: 15, outputTokens: 8 } },
+      ),
+    )
+
+    const engine = new AgentEngine(makeConfig({
+      stopAfterTools: ['ask_user_question'],
+    }))
+    const events = await collectEvents(engine, 'Weather?')
+
+    // All events should be present
+    const textEvents = events.filter((e) => e.type === 'text-delta')
+    expect(textEvents).toHaveLength(1)
+
+    const result = events.find((e) => e.type === 'result')
+    expect(result).toBeDefined()
+    expect((result as any).stoppedByTool).toBeUndefined()
+  })
 })
