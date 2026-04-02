@@ -462,6 +462,35 @@ const engine = new AgentEngine({
 
 被拒絕的 tool call 會 yield `tool-call-complete` 事件，output 為 `"DENIED: 權限不足"`。
 
+### 指定 Tool 後中斷 Loop（stopAfterTools）
+
+某些 tool 執行完後，你希望中斷 agentic loop、把控制權交回呼叫方。例如 `ask_user_question`（需要等使用者回答）或 `suggest_next_questions`（需要前端渲染按鈕）：
+
+```typescript
+const engine = new AgentEngine({
+  ...,
+  stopAfterTools: ['ask_user_question', 'suggest_next_questions'],
+})
+```
+
+當名單中的 tool 完成後，loop 立刻中斷。`result` 事件會帶 `stoppedByTool` 欄位：
+
+```typescript
+for await (const event of engine.run('分析這份報告')) {
+  if (event.type === 'tool-call-complete') {
+    console.log(event.toolName, event.output)
+  }
+  if (event.type === 'result') {
+    if (event.stoppedByTool) {
+      // loop 被中斷，等使用者回應後再開下一個 turn
+      console.log(`等待使用者回應（觸發: ${event.stoppedByTool}）`)
+    }
+  }
+}
+```
+
+不在名單裡的 tool 正常繼續 loop，不受影響。
+
 ### 錯誤處理與 Model Fallback
 
 ```typescript
@@ -554,6 +583,7 @@ const engine = new AgentEngine({
   maxSteps: 30,
   maxDurationMs: 120_000,
   abortSignal: req.signal,
+  stopAfterTools: ['ask_user_question', 'suggest_next_questions'],
 
   // 錯誤處理
   onError: new DefaultErrorHandler('openai/gpt-4o'),
@@ -589,6 +619,7 @@ const engine = new AgentEngine({
 | `maxSteps` | `number` | No | Tool call 步數上限（預設 25）|
 | `maxDurationMs` | `number` | No | 時間上限（毫秒）|
 | `abortSignal` | `AbortSignal` | No | 外部取消信號 |
+| `stopAfterTools` | `string[]` | No | 指定 tool 完成後中斷 loop，result 會帶 `stoppedByTool` |
 | `onToolCall` | `ToolCallHook` | No | Tool 呼叫攔截器 |
 | `onError` | `ErrorHandler` | No | 錯誤處理策略 |
 | `compactionStrategy` | `CompactionStrategy` | No | 壓縮策略 |
